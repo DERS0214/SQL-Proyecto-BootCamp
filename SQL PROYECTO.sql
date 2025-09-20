@@ -160,11 +160,8 @@ use proyecto;
 
 -- Consultas
 -- 1) ¿Qué tipo de residuo se genera con mayor frecuencia en cada ubicación?
-SELECT
-	-- Seleccionar Ubicación, residuo, total 
-    ubicacion,
-    residuo,
-    Total
+SELECT	
+    ubicacion,     residuo,    Total -- Seleccionar Ubicación, residuo, total 
 FROM (
 	-- Primero hacemos un query para mostrar por cada Ubicación un ranking con el tipo de residuo
     SELECT
@@ -181,8 +178,7 @@ FROM (
         u.id_ubicacion, tr.nombre
 ) AS T1
 WHERE
-	-- Filtramos solo el primer ranking de cada Ubicación
-    T1.ranking = 1
+    T1.ranking = 1 -- Filtramos solo el primer ranking de cada Ubicación
 ORDER BY
     T1.Total DESC;
     
@@ -207,7 +203,7 @@ JOIN tipo_residuo tr ON tr.id_tipo_residuo = tot.id_tipo_residuo
 ORDER BY tot.TotalKg DESC;
 */
 -- -----------------------------------------------------------------------------
-
+set lc_time_names = 'es_ES';
 
 -- -----------------------------------------------------------------------------
 -- 2) ¿Qué días de la semana tienen mayor volumen de recolección? 
