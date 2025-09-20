@@ -84,10 +84,19 @@ INSERT INTO tipo_residuo (nombre, clasificacion) VALUES
 INSERT INTO recoleccion (id_ubicacion, fecha, observacion) VALUES
 (1, '2025-09-01', 'Recolección en Norte - sector Kennedy'),
 (2, '2025-09-02', 'Recolección en Sur - Febres Cordero'),
-(3, '2025-09-03', 'Centro Historico de Quito'),
+(3, '2025-09-03', 'Centro Histórico de Quito'),
 (4, '2025-09-04', 'Cuenca Oeste - Totoracocha'),
 (5, '2025-09-05', 'Zona industrial de Guayaquil'),
-(6, '2025-09-06', 'Quito - Chillogallo');
+(6, '2025-09-06', 'Quito - Chillogallo'),
+(1, '2025-09-07', 'Nueva jornada en Norte - Urdesa'),
+(2, '2025-09-08', 'Recolección Sur - Guasmo'),
+(3, '2025-09-09', 'Centro Quito - Plaza Grande'),
+(4, '2025-09-10', 'Cuenca Oeste - Baños'),
+(5, '2025-09-11', 'Zona industrial - Vía Daule'),
+(6, '2025-09-12', 'Chillogallo - Barrio La Mena'),
+(1, '2025-09-13', 'Norte - Alborada'),
+(2, '2025-09-14', 'Sur - Fertisa');
+
 
 -- 4) Procesos de disposición 
 INSERT INTO proceso_disposicion (nombre, descripcion) VALUES
@@ -100,12 +109,45 @@ INSERT INTO proceso_disposicion (nombre, descripcion) VALUES
 
 -- 5) Recolección Detalles 
 INSERT INTO recoleccion_detalle (id_recoleccion, id_tipo_residuo, id_proceso_disposicion, cantidad_kg) VALUES
-(1, 1, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Compostaje'), 180.00), -- Orgánico
-(2, 2, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Reciclaje'),   75.00), -- Plástico
-(3, 3, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Reciclaje'),   50.00), -- Vidrio
-(4, 4, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Incineración'),15.00), -- Baterías
-(5, 5, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Vertedero'),  320.00), -- Escombros
-(6, 6, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Reutilización'),60.00); -- Metales
+-- 2025-09-01 (Norte)
+(1, 1, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Compostaje'), 180.00),
+(1, 2, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Reciclaje'),   45.00),
+-- 2025-09-02 (Sur)
+(2, 2, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Reciclaje'),   80.00),
+-- 2025-09-03 (Centro Quito)
+(3, 3, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Reciclaje'),   60.00),
+(3, 1, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Compostaje'), 110.00),
+-- 2025-09-04 (Cuenca Oeste)
+(4, 4, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Incineración'), 12.00),
+(4, 2, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Reciclaje'),    55.00),
+-- 2025-09-05 (Zona industrial)
+(5, 5, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Vertedero'),  300.00),
+(5, 6, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Reutilización'), 50.00),
+-- 2025-09-06 (Chillogallo)
+(6, 1, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Compostaje'), 140.00),
+-- 2025-09-07 (Norte)
+(7, 2, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Reciclaje'),   65.00),
+(7, 3, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Reciclaje'),   40.00),
+-- 2025-09-08 (Sur)
+(8, 1, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Compostaje'), 120.00),
+-- 2025-09-09 (Centro Quito)
+(9, 5, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Vertedero'),  200.00),
+(9, 6, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Reutilización'), 70.00),
+-- 2025-09-10 (Cuenca Oeste)
+(10, 2, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Reciclaje'),  90.00),
+-- 2025-09-11 (Zona industrial)
+(11, 4, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Incineración'), 20.00),
+(11, 6, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Reutilización'), 40.00),
+-- 2025-09-12 (Chillogallo)
+(12, 1, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Compostaje'), 160.00),
+(12, 2, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Reciclaje'),   55.00),
+-- 2025-09-13 (Norte)
+(13, 3, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Reciclaje'),   70.00),
+-- 2025-09-14 (Sur)
+(14, 5, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Vertedero'),  250.00),
+(14, 1, (SELECT id_proceso_disposicion FROM proceso_disposicion WHERE nombre='Compostaje'), 100.00);
+
+
 
 
 
@@ -114,4 +156,132 @@ select * from recoleccion;
 select * from recoleccion_detalle;
 select * from tipo_residuo;
 select * from ubicacion;
+use proyecto;
 
+-- Consultas
+-- 1) ¿Qué tipo de residuo se genera con mayor frecuencia en cada ubicación?
+SELECT
+	-- Seleccionar Ubicación, residuo, total 
+    ubicacion,
+    residuo,
+    Total
+FROM (
+	-- Primero hacemos un query para mostrar por cada Ubicación un ranking con el tipo de residuo
+    SELECT
+        CONCAT(u.nombre, ' ', u.ciudad) AS Ubicacion,
+        tr.nombre AS residuo,
+        SUM(rd.cantidad_kg) AS Total,
+        ROW_NUMBER() OVER(PARTITION BY u.id_ubicacion ORDER BY SUM(rd.cantidad_kg) DESC) AS ranking
+    FROM
+        recoleccion AS r
+    INNER JOIN recoleccion_detalle AS rd ON r.id_recoleccion = rd.id_recoleccion
+    INNER JOIN ubicacion AS u ON u.id_ubicacion = r.id_ubicacion
+    INNER JOIN tipo_residuo AS tr ON tr.id_tipo_residuo = rd.id_tipo_residuo
+    GROUP BY
+        u.id_ubicacion, tr.nombre
+) AS T1
+WHERE
+	-- Filtramos solo el primer ranking de cada Ubicación
+    T1.ranking = 1
+ORDER BY
+    T1.Total DESC;
+    
+    
+-- Optimizacion de datos con index
+  CREATE INDEX ix_detalle_recol_tipo
+  ON recoleccion_detalle (id_recoleccion, id_tipo_residuo, cantidad_kg);
+  
+  -- 
+  EXPLAIN
+WITH tot AS (
+  SELECT r.id_ubicacion, rd.id_tipo_residuo, SUM(rd.cantidad_kg) AS TotalKg
+  FROM recoleccion r
+  JOIN recoleccion_detalle rd ON rd.id_recoleccion = r.id_recoleccion
+  GROUP BY r.id_ubicacion, rd.id_tipo_residuo
+)
+SELECT u.nombre, u.ciudad, tr.nombre, tot.TotalKg
+FROM tot
+JOIN ubicacion u     ON u.id_ubicacion = tot.id_ubicacion
+JOIN tipo_residuo tr ON tr.id_tipo_residuo = tot.id_tipo_residuo
+ORDER BY tot.TotalKg DESC;
+-- -----------------------------------------------------------------------------
+
+
+-- -----------------------------------------------------------------------------
+-- 2) ¿Qué días de la semana tienen mayor volumen de recolección? 
+SELECT 
+  UPPER(DATE_FORMAT(r.fecha, '%W')) AS Dia, 
+  SUM(rd.cantidad_kg) AS TotalRecolectado
+FROM recoleccion AS r
+INNER JOIN recoleccion_detalle AS rd
+  ON r.id_recoleccion = rd.id_recoleccion
+GROUP BY Dia
+ORDER BY TotalRecolectado DESC;
+
+-- Optimizacion de datos con index
+CREATE INDEX ix_recoleccion_fecha_recol
+  ON recoleccion (fecha, id_recoleccion); 
+
+CREATE INDEX ix_detalle_recol_cant
+  ON recoleccion_detalle (id_recoleccion, cantidad_kg);
+  
+  -- 
+  EXPLAIN
+SELECT 
+  DATE_FORMAT(r.fecha, '%W') AS Dia, 
+  SUM(rd.cantidad_kg) AS TotalRecolectado
+FROM recoleccion AS r
+JOIN recoleccion_detalle AS rd
+  ON r.id_recoleccion = rd.id_recoleccion
+GROUP BY Dia
+ORDER BY TotalRecolectado DESC;
+-- -----------------------------------------------------------------------------
+
+
+-- -----------------------------------------------------------------------------
+-- 3) ¿Qué ubicaciones tienen mayor eficiencia en la separación de residuos reciclables?
+-- Ubicaciones con más kilos reciclables
+ SELECT
+  Ubicacion,
+ROUND(
+  SUM(CASE WHEN Clasificacion = 'Reciclable' THEN Cantidad ELSE 0 END)
+  / SUM(Cantidad) * 100, 2) AS Tasa_Eficiencia -- round
+FROM
+  (
+	SELECT CONCAT(u.nombre, ' ', u.ciudad) AS Ubicacion,
+      tr.clasificacion AS Clasificacion,
+      SUM(rd.cantidad_kg) AS Cantidad
+    FROM
+      recoleccion AS r
+      INNER JOIN recoleccion_detalle AS rd ON r.id_recoleccion = rd.id_recoleccion
+      INNER JOIN ubicacion AS u ON u.id_ubicacion = r.id_ubicacion
+      INNER JOIN tipo_residuo AS tr ON tr.id_tipo_residuo = rd.id_tipo_residuo
+    GROUP BY
+      Ubicacion,
+      Clasificacion
+  ) AS Totales
+GROUP BY
+  Ubicacion
+ORDER BY
+  Tasa_Eficiencia DESC;
+
+-- Optimizacion de datos con index
+CREATE INDEX ix_recoleccion_fecha_recol
+  ON recoleccion (fecha, id_recoleccion);    
+
+CREATE INDEX ix_detalle_recol
+  ON recoleccion_detalle (id_recoleccion, id_tipo_residuo, cantidad_kg);  
+  
+-- 
+EXPLAIN
+SELECT
+  u.nombre  AS Ubicacion,
+  u.ciudad  AS Ciudad,
+  SUM(CASE WHEN tr.clasificacion = 'Reciclable'
+           THEN rd.cantidad_kg ELSE 0 END) AS KgReciclables
+FROM recoleccion r
+JOIN recoleccion_detalle rd ON rd.id_recoleccion  = r.id_recoleccion
+JOIN ubicacion u            ON u.id_ubicacion     = r.id_ubicacion
+JOIN tipo_residuo tr        ON tr.id_tipo_residuo = rd.id_tipo_residuo
+GROUP BY u.id_ubicacion
+ORDER BY KgReciclables DESC;
