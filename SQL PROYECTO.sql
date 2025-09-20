@@ -187,6 +187,7 @@ ORDER BY
     T1.Total DESC;
     
     
+/*
 -- Optimizacion de datos con index
   CREATE INDEX ix_detalle_recol_tipo
   ON recoleccion_detalle (id_recoleccion, id_tipo_residuo, cantidad_kg);
@@ -204,6 +205,7 @@ FROM tot
 JOIN ubicacion u     ON u.id_ubicacion = tot.id_ubicacion
 JOIN tipo_residuo tr ON tr.id_tipo_residuo = tot.id_tipo_residuo
 ORDER BY tot.TotalKg DESC;
+*/
 -- -----------------------------------------------------------------------------
 
 
@@ -218,6 +220,7 @@ INNER JOIN recoleccion_detalle AS rd
 GROUP BY Dia
 ORDER BY TotalRecolectado DESC;
 
+/*
 -- Optimizacion de datos con index
 CREATE INDEX ix_recoleccion_fecha_recol
   ON recoleccion (fecha, id_recoleccion); 
@@ -235,6 +238,7 @@ JOIN recoleccion_detalle AS rd
   ON r.id_recoleccion = rd.id_recoleccion
 GROUP BY Dia
 ORDER BY TotalRecolectado DESC;
+*/
 -- -----------------------------------------------------------------------------
 
 
@@ -265,6 +269,7 @@ GROUP BY
 ORDER BY
   Tasa_Eficiencia DESC;
 
+/*
 -- Optimizacion de datos con index
 CREATE INDEX ix_recoleccion_fecha_recol
   ON recoleccion (fecha, id_recoleccion);    
@@ -285,3 +290,4 @@ JOIN ubicacion u            ON u.id_ubicacion     = r.id_ubicacion
 JOIN tipo_residuo tr        ON tr.id_tipo_residuo = rd.id_tipo_residuo
 GROUP BY u.id_ubicacion
 ORDER BY KgReciclables DESC;
+*/
