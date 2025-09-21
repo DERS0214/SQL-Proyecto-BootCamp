@@ -160,7 +160,7 @@ use proyecto;
 
 -- Consultas
 -- 1) ¿Qué tipo de residuo se genera con mayor frecuencia en cada ubicación?
-SELECT	
+EXPLAIN SELECT	
     ubicacion,     residuo,    Total -- Seleccionar Ubicación, residuo, total 
 FROM (
 	-- Primero hacemos un query para mostrar por cada Ubicación un ranking con el tipo de residuo
@@ -183,31 +183,16 @@ ORDER BY
     T1.Total DESC;
     
     
-/*
--- Optimizacion de datos con index
-  CREATE INDEX ix_detalle_recol_tipo
-  ON recoleccion_detalle (id_recoleccion, id_tipo_residuo, cantidad_kg);
-  
-  -- 
-  EXPLAIN
-WITH tot AS (
-  SELECT r.id_ubicacion, rd.id_tipo_residuo, SUM(rd.cantidad_kg) AS TotalKg
-  FROM recoleccion r
-  JOIN recoleccion_detalle rd ON rd.id_recoleccion = r.id_recoleccion
-  GROUP BY r.id_ubicacion, rd.id_tipo_residuo
-)
-SELECT u.nombre, u.ciudad, tr.nombre, tot.TotalKg
-FROM tot
-JOIN ubicacion u     ON u.id_ubicacion = tot.id_ubicacion
-JOIN tipo_residuo tr ON tr.id_tipo_residuo = tot.id_tipo_residuo
-ORDER BY tot.TotalKg DESC;
-*/
+ALTER TABLE recoleccion_detalle
+ADD INDEX idx_rd_recoleccion_cantidad (id_recoleccion, cantidad_kg);
+    
+
 -- -----------------------------------------------------------------------------
 set lc_time_names = 'es_ES';
 
 -- -----------------------------------------------------------------------------
 -- 2) ¿Qué días de la semana tienen mayor volumen de recolección? 
-SELECT 
+EXPLAIN SELECT 
   UPPER(DATE_FORMAT(r.fecha, '%W')) AS Dia, 
   SUM(rd.cantidad_kg) AS TotalRecolectado
 FROM recoleccion AS r
@@ -216,32 +201,15 @@ INNER JOIN recoleccion_detalle AS rd
 GROUP BY Dia
 ORDER BY TotalRecolectado DESC;
 
-/*
--- Optimizacion de datos con index
 CREATE INDEX ix_recoleccion_fecha_recol
-  ON recoleccion (fecha, id_recoleccion); 
-
-CREATE INDEX ix_detalle_recol_cant
-  ON recoleccion_detalle (id_recoleccion, cantidad_kg);
-  
-  -- 
-  EXPLAIN
-SELECT 
-  DATE_FORMAT(r.fecha, '%W') AS Dia, 
-  SUM(rd.cantidad_kg) AS TotalRecolectado
-FROM recoleccion AS r
-JOIN recoleccion_detalle AS rd
-  ON r.id_recoleccion = rd.id_recoleccion
-GROUP BY Dia
-ORDER BY TotalRecolectado DESC;
-*/
+	on recoleccion (fecha, id_recoleccion);
 -- -----------------------------------------------------------------------------
 
 
 -- -----------------------------------------------------------------------------
 -- 3) ¿Qué ubicaciones tienen mayor eficiencia en la separación de residuos reciclables?
 -- Ubicaciones con más kilos reciclables
- SELECT
+EXPLAIN SELECT
   Ubicacion,
 ROUND(
   SUM(CASE WHEN Clasificacion = 'Reciclable' THEN Cantidad ELSE 0 END)
@@ -265,25 +233,5 @@ GROUP BY
 ORDER BY
   Tasa_Eficiencia DESC;
 
-/*
--- Optimizacion de datos con index
-CREATE INDEX ix_recoleccion_fecha_recol
-  ON recoleccion (fecha, id_recoleccion);    
-
-CREATE INDEX ix_detalle_recol
-  ON recoleccion_detalle (id_recoleccion, id_tipo_residuo, cantidad_kg);  
-  
--- 
-EXPLAIN
-SELECT
-  u.nombre  AS Ubicacion,
-  u.ciudad  AS Ciudad,
-  SUM(CASE WHEN tr.clasificacion = 'Reciclable'
-           THEN rd.cantidad_kg ELSE 0 END) AS KgReciclables
-FROM recoleccion r
-JOIN recoleccion_detalle rd ON rd.id_recoleccion  = r.id_recoleccion
-JOIN ubicacion u            ON u.id_ubicacion     = r.id_ubicacion
-JOIN tipo_residuo tr        ON tr.id_tipo_residuo = rd.id_tipo_residuo
-GROUP BY u.id_ubicacion
-ORDER BY KgReciclables DESC;
-*/
+CREATE INDEX IX_recoleccion_detalle_complete 
+ON recoleccion_detalle (id_recoleccion, id_tipo_residuo, cantidad_kg);
